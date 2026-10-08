@@ -1,1 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
 *.pyc
+
+# Entorno virtual
+.venv/
+venv/
+env/
+
+# Variables de entorno (secretos)
+.env
+.env.*
+!.env.example
+
+# Bases de datos SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Cachés de tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Archivos de IDE
+.idea/
+.vscode/
+*.swp
