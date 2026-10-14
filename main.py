@@ -76,7 +76,7 @@ def actualizar_poliza(id_poliza: int, datos: PolizaActualizacion, db: Session = 
     poliza = db.get(Poliza, id_poliza)
     if poliza is None:
         return {"error": f"no existe la póliza {id_poliza}"}
-    for campo, valor in datos.model_dump().items():
+    for campo, valor in datos.model_dump(exclude_unset=True).items():
         setattr(poliza, campo, valor)
     db.commit()
     db.refresh(poliza)
