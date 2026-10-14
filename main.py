@@ -9,6 +9,7 @@ from datetime import date
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 import config
 from database import Base, get_db
@@ -50,7 +51,7 @@ def _poliza(p: Poliza) -> dict:
     }
 
 
-@app.post("/polizas")
+@app.post("/polizas", status_code=201)
 def crear_poliza(datos: PolizaEntrada, db: Session = Depends(get_db)):
     poliza = Poliza(numero=datos.numero, asegurado=datos.asegurado, tipo=datos.tipo,
                     prima=datos.prima, fecha_inicio=datos.fecha_inicio, fecha_fin=datos.fecha_fin,
@@ -61,7 +62,14 @@ def crear_poliza(datos: PolizaEntrada, db: Session = Depends(get_db)):
             monto=s.get("monto", 0), descripcion=s.get("descripcion", ""),
             estado=s.get("estado", "abierto")))
     db.add(poliza)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=f"El número de póliza {datos.numero} ya existe"
+        )
     db.refresh(poliza)
     return poliza
 

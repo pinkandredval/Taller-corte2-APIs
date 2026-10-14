@@ -12,9 +12,9 @@
 | # | Parte | Quién | Prompt (resumido si es largo) |
 |---|-------|-------|-------------------------------|
 | 1 | A | Valentina | "H1=prefiero la opción 1 de freezer, pero ¿la hago ya o luego?"|
-| 2 | A | Valentina | "H2=¿por qué incluyes el .dockerignore en el .gitignore?" |
+| 2 | A | Valentina | "H2=¿por qué incluyes el `.dockerignore` en el `.gitignore`?" |
 | 3 | A | Valentina | "H2=sigo sin entender lo de no unir H2 con H3" |
-| 4 | B | Valentina | "Quiero solucionar el H4." (Se adjuntó config.py con secretos hardcodeados). |
+| 4 | B | Valentina | "Quiero solucionar el H4." (Se adjuntó `config.py` con secretos hardcodeados). |
 | 5 | A | Valentina | "No quiero añadir esas variables de compatibilidad... me parece innecesario." (Rechazo inicial) |
 | 6 | A | Margarita | "Sale este error: `NOT NULL constraint failed: polizas.prima` al hacer PUT con solo `{"prima": 600}`" (H13). |
 | 7 | A | Margarita | "Ya corregí el hallazgo 15 pero sigue apareciendo `None` en `asegurado`." (H15). |
@@ -25,16 +25,16 @@
 | 12 | A | Margarita | "Los comandos `curl.exe` no dan el JSON, sale `JSON decode error`" (PowerShell). |
 | 13 | A | Valentina | "¿Cómo solucionar la sesión global en `database.py` y `crear get_db?`" |
 | 14 | A | Valentina | "¿Cómo eliminar `create_all` y usar `Alembic`? No sé cómo corregir `alembic/env.py`." |
-| 15 | A | Kevin | "¿Cómo crear el endpoint /health que verifique la base de datos?" |
-| 16 | A | Kevin | "¿Cómo hacer que GET /polizas/{id} devuelva 404 si no existe?" |
-| 17 | A |  | "" |
-| 18 | A |  | "" |
+| 15 | A | Kevin | "¿Cómo crear el endpoint `/health` que verifique la base de datos?" |
+| 16 | A | Kevin | "¿Cómo hacer que `GET /polizas/{id}` devuelva `404` si no existe?" |
+| 17 | A | Kevin | "¿Cómo hacer que `POST /polizas` devuelva `201`?" |
+| 18 | A | Kevin | "¿Cómo hacer que `POST /polizas` devuelva `409` si el número ya existe?" |
 | 19 | A |  | "" |
 | 20 | A |  | "" |
-| 13 | A |  | "" |
-| 14 | A |  | "" |
-| 15 | A |  | "" |
-| 16 | A |  | "" |
+| 21 | A |  | "" |
+| 22 | A |  | "" |
+| 23 | A |  | "" |
+| 24 | A |  | "" |
 
 
 ## Aceptado
@@ -57,8 +57,14 @@
 | 12 | Usar `Invoke-RestMethod` en lugar de `curl.exe` para enviar JSON. Usar `-o $null` y `Select-Object -First 1` en lugar de `-o NUL` y `head -1` (Problema técnico: PowerShell). | Los comandos `curl.exe` daban `JSON decode error` y no podíamos probar los endpoints. | Adaptamos todos los comandos de prueba a PowerShell. |
 | 13 | Refactor de `database.py`: eliminar `sesion = SessionLocal()`, crear `get_db` como generador con `yield`, y usar `Depends(get_db)` en todas las rutas. | Cumple la restricción B3 del taller ("sesión por petición"). | Nada, se implementó tal cual. |
 | 14 | Reemplazar todo el contenido de `alembic/env.py` con una versión que importa Base y los modelos, configura `target_metadata = Base.metadata`, y usa `DATABASE_URL` desde `config.py`. | No era un simple arreglo de indentación. El `env.py` original tenía `target_metadata = None`, lo que impedía que `Alembic` detectara las tablas. Además, no importaba los modelos ni configuraba la URL. Sin estos cambios, `alembic revision --autogenerate` generaría una migración vacía. | Se reemplazó el archivo completo (no solo se editó una línea). Se ajustó el `sys.path` para que los imports funcionaran desde la carpeta `alembic/`. |
-| 15 | Endpoint GET /health que ejecuta SELECT 1 y devuelve {"status": "ok", "database": "ok"}. Si la BD falla, lanza HTTPException(503). | Cumple la restricción B10 del taller. Verifica la base de datos de forma simple y correcta. Además, incluimos HTTPException desde el principio para que el endpoint ya maneje errores correctamente y no haya que corregirlo después. | Nada, se implementó tal cual, incluyendo el HTTPException |
-| 16 | Cambiar return {"error": ...} por raise HTTPException(status_code=404, detail=...). | Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
+| 15 | Endpoint `GET /health` que ejecuta SELECT 1 y devuelve `{"status": "ok", "database": "ok"}`. Si la BD falla, lanza `HTTPException(503)`. | Cumple la restricción B10 del taller. Verifica la base de datos de forma simple y correcta. Además, incluimos `HTTPException` desde el principio para que el endpoint ya maneje errores correctamente y no haya que corregirlo después. | Nada, se implementó tal cual, incluyendo el `HTTPException` |
+| 16 | Cambiar `return {"error": ...}` por `raise HTTPException(status_code=404, detail=...)`. | Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
+| 17 | Añadir `status_code=201` al decorador `@app.post("/polizas")`. |   Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
+| 18 | Capturar `IntegrityError`, hacer rollback y lanzar `HTTPException(409)` | Es la forma correcta de manejar conflictos de unicidad. Cumple la restricción B6 del taller. | Nada, se implementó tal cual.|
+| 1 |  |  |  |
+| 1 |  |  |  |
+| 1 |  |  |  |
+| 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
 
@@ -81,5 +87,4 @@
 | 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
-
 | 1 |  |  |  |
