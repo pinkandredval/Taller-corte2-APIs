@@ -23,8 +23,8 @@
 | 10 | A | Margarita | "¿Es mejor unir el H14 con el H18? Nos dimos cuenta que es mejor unir el H13 y el H18, o se unen los 3?" (Unificación de hallazgos). |
 | 11 | A | Margarita| "El servicio no arranca, sale `no such table: polizas`" (Alembic). |
 | 12 | A | Margarita | "Los comandos `curl.exe` no dan el JSON, sale `JSON decode error`" (PowerShell). |
-| 13 | A |  | "" |
-| 14 | A |  | "" |
+| 13_ | A | Valentina | "¿Cómo solucionar la sesión global en `database.py` y `crear get_db?`" |
+| 14_ | A | Valentina | "¿Cómo eliminar `create_all` y usar `Alembic`? No sé cómo corregir `alembic/env.py`." |
 | 15 | A |  | "" |
 | 16 | A |  | "" |
 
@@ -47,6 +47,10 @@
 | 12 | Unificar H18 (`tipo` en POST) y H19 (`tipo` en PUT) en una sola fila de `HALLAZGOS.md`. | Son el mismo defecto (`Literal` faltante) en dos esquemas distintos. Reduce filas y gana precisión. | Se mantuvo H19 (`estado`) separado porque afecta a un campo distinto. |
 | 13 | Escribir la revisión de Alembic a mano (`op.create_table(...)`) porque la generada estaba vacía (Problema técnico: Alembic). | Sin las tablas, el servicio devolvía `no such table: polizas`. Necesitábamos el servicio funcionando para diagnosticar. | Escribimos la revisión manualmente y aplicamos `python -m alembic upgrade head` sobre la base temporal. |
 | 14 | Usar `Invoke-RestMethod` en lugar de `curl.exe` para enviar JSON. Usar `-o $null` y `Select-Object -First 1` en lugar de `-o NUL` y `head -1` (Problema técnico: PowerShell). | Los comandos `curl.exe` daban `JSON decode error` y no podíamos probar los endpoints. | Adaptamos todos los comandos de prueba a PowerShell. |
+| 13_ | Refactor de `database.py`: eliminar `sesion = SessionLocal()`, crear `get_db` como generador con `yield`, y usar `Depends(get_db)` en todas las rutas. | Cumple la restricción B3 del taller ("sesión por petición"). | Nada, se implementó tal cual. |
+| 14_ | Reemplazar todo el contenido de `alembic/env.py` con una versión que importa Base y los modelos, configura `target_metadata = Base.metadata`, y usa `DATABASE_URL` desde `config.py`. | No era un simple arreglo de indentación. El `env.py` original tenía `target_metadata = None`, lo que impedía que `Alembic` detectara las tablas. Además, no importaba los modelos ni configuraba la URL. Sin estos cambios, `alembic revision --autogenerate` generaría una migración vacía. | Se reemplazó el archivo completo (no solo se editó una línea). Se ajustó el `sys.path` para que los imports funcionaran desde la carpeta `alembic/`. |
+| 1 |  |  |  |
+| 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
 
@@ -62,6 +66,10 @@
 | 6 | Documentar `PolizaActualizacion.prima` como hallazgo. | Al revisar el código, `prima` **ya tiene** `gt=0`. No es un defecto. Documentarlo restaría puntos porque el taller dice: *"Una fila que no corresponda a un defecto real resta la mitad"*. | No se documentó. Se verificó que la validación funciona (devuelve 422 con `prima = -100`). |
 | 7 | Usar `curl.exe` con `-o NUL` y `head -1` para los comandos de evidencia. | En PowerShell, `-o NUL` no funciona correctamente (devuelve `422000` en lugar de `422`), y `head -1` no existe (es un comando de Linux). | Usamos `-o $null` en lugar de `-o NUL`, y `Select-Object -First 1` en lugar de `head -1`. |
 | 8 | Usar `curl.exe` para enviar JSON en PowerShell. | PowerShell rompe las comillas anidadas del JSON, dando `JSON decode error`. No podíamos probar los endpoints. | Usamos `Invoke-RestMethod` con `ConvertTo-Json`, que maneja el JSON correctamente. |
+| 1 |  |  |  |
+| 1 |  |  |  |
+| 1 |  |  |  |
+| 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
