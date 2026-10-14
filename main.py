@@ -7,7 +7,7 @@ import pickle
 from datetime import date
 
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 import config
@@ -22,6 +22,14 @@ with open(config.RUTA_MODELO, "rb") as fh:
 
 app = FastAPI(title="Pólizas API", version="0.1.0")
 
+@app.get("/health")
+def health(db: Session = Depends(get_db)):
+    """Verifica que el servicio y la base de datos responden."""
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "ok"}
+    except Exception:
+        raise HTTPException(status_code=503, detail="Base de datos no responde")
 
 def firmar(numero: str) -> str:
     return hashlib.sha256(f"{numero}:{config.SECRETO_FIRMA}".encode()).hexdigest()
@@ -67,7 +75,7 @@ def listar_polizas(db: Session = Depends(get_db)):
 def obtener_poliza(id_poliza: int, db: Session = Depends(get_db)):
     poliza = db.get(Poliza, id_poliza)
     if poliza is None:
-        return {"error": f"no existe la póliza {id_poliza}"}
+        raise HTTPException(status_code=404, detail=f"no existe la póliza {id_poliza}")
     return _poliza(poliza)
 
 

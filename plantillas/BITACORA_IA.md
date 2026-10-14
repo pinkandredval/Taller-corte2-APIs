@@ -25,9 +25,12 @@
 | 12 | A | Margarita | "Los comandos `curl.exe` no dan el JSON, sale `JSON decode error`" (PowerShell). |
 | 13_ | A | Valentina | "¿Cómo solucionar la sesión global en `database.py` y `crear get_db?`" |
 | 14_ | A | Valentina | "¿Cómo eliminar `create_all` y usar `Alembic`? No sé cómo corregir `alembic/env.py`." |
-| 15 | A |  | "" |
-| 16 | A |  | "" |
-
+| 15_ | A | Kevin | "¿Cómo crear el endpoint /health que verifique la base de datos?" |
+| 16_ | A | Kevin | "¿Cómo hacer que GET /polizas/{id} devuelva 404 si no existe?" |
+| 17 | A |  | "" |
+| 18 | A |  | "" |
+| 19 | A |  | "" |
+| 20 | A |  | "" |
 
 ## Aceptado
 
@@ -49,8 +52,8 @@
 | 14 | Usar `Invoke-RestMethod` en lugar de `curl.exe` para enviar JSON. Usar `-o $null` y `Select-Object -First 1` en lugar de `-o NUL` y `head -1` (Problema técnico: PowerShell). | Los comandos `curl.exe` daban `JSON decode error` y no podíamos probar los endpoints. | Adaptamos todos los comandos de prueba a PowerShell. |
 | 13_ | Refactor de `database.py`: eliminar `sesion = SessionLocal()`, crear `get_db` como generador con `yield`, y usar `Depends(get_db)` en todas las rutas. | Cumple la restricción B3 del taller ("sesión por petición"). | Nada, se implementó tal cual. |
 | 14_ | Reemplazar todo el contenido de `alembic/env.py` con una versión que importa Base y los modelos, configura `target_metadata = Base.metadata`, y usa `DATABASE_URL` desde `config.py`. | No era un simple arreglo de indentación. El `env.py` original tenía `target_metadata = None`, lo que impedía que `Alembic` detectara las tablas. Además, no importaba los modelos ni configuraba la URL. Sin estos cambios, `alembic revision --autogenerate` generaría una migración vacía. | Se reemplazó el archivo completo (no solo se editó una línea). Se ajustó el `sys.path` para que los imports funcionaran desde la carpeta `alembic/`. |
-| 1 |  |  |  |
-| 1 |  |  |  |
+| 15_ | Endpoint GET /health que ejecuta SELECT 1 y devuelve {"status": "ok", "database": "ok"}. Si la BD falla, lanza HTTPException(503). | Cumple la restricción B10 del taller. Verifica la base de datos de forma simple y correcta. Además, incluimos HTTPException desde el principio para que el endpoint ya maneje errores correctamente y no haya que corregirlo después. | Nada, se implementó tal cual, incluyendo el HTTPException |
+| 16_ | Cambiar return {"error": ...} por raise HTTPException(status_code=404, detail=...). | Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
 | 1 |  |  |  |
 | 1 |  |  |  |
 
