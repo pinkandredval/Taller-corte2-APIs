@@ -18,11 +18,19 @@
 | 5 | A | Valentina | "No quiero añadir esas variables de compatibilidad... me parece innecesario." (Rechazo inicial) |
 | 6 | A | Margarita | "Sale este error: `NOT NULL constraint failed: polizas.prima` al hacer PUT con solo `{"prima": 600}`" (H13). |
 | 7 | A | Margarita | "Ya corregí el hallazgo 15 pero sigue apareciendo `None` en `asegurado`." (H15). |
-| 8 | A | Valentina | "Ya revisé `tipo` y `estado`. Sale esto pero aún no he hecho la corrección. ¿Cómo valido `tipo`, `estado`, `prima`? ¿Dónde va el `@model_validator`?" (H17, H18, H19). |
+| 8 | A | Margarita | "Ya revisé `tipo` y `estado`. Sale esto pero aún no he hecho la corrección. ¿Cómo valido `tipo`, `estado`, `prima`? ¿Dónde va el `@model_validator`?" (H17, H18, H19). |
 | 9 | A | Margarita | "Sale esto pero aún no he hecho la corrección" (H18, se adjuntó salida con `tipo: "invalido"`). |
 | 10 | A | Margarita | "¿Es mejor unir el H14 con el H18? Nos dimos cuenta que es mejor unir el H13 y el H18, o se unen los 3?" (Unificación de hallazgos). |
 | 11 | A | Margarita| "El servicio no arranca, sale `no such table: polizas`" (Alembic). |
 | 12 | A | Margarita | "Los comandos `curl.exe` no dan el JSON, sale `JSON decode error`" (PowerShell). |
+| 13 | A | Valentina | "¿Cómo solucionar la sesión global en `database.py` y `crear get_db?`" |
+| 14 | A | Valentina | "¿Cómo eliminar `create_all` y usar `Alembic`? No sé cómo corregir `alembic/env.py`." |
+| 15 | A | Kevin | "¿Cómo crear el endpoint /health que verifique la base de datos?" |
+| 16 | A | Kevin | "¿Cómo hacer que GET /polizas/{id} devuelva 404 si no existe?" |
+| 17 | A |  | "" |
+| 18 | A |  | "" |
+| 19 | A |  | "" |
+| 20 | A |  | "" |
 | 13 | A |  | "" |
 | 14 | A |  | "" |
 | 15 | A |  | "" |
@@ -47,6 +55,10 @@
 | 10 | Unificar H18 (`tipo` en POST) y H19 (`tipo` en PUT) en una sola fila de `HALLAZGOS.md`. | Son el mismo defecto (`Literal` faltante) en dos esquemas distintos. Reduce filas y gana precisión. | Se mantuvo H19 (`estado`) separado porque afecta a un campo distinto. |
 | 11 | Escribir la revisión de Alembic a mano (`op.create_table(...)`) porque la generada estaba vacía (Problema técnico: Alembic). | Sin las tablas, el servicio devolvía `no such table: polizas`. Necesitábamos el servicio funcionando para diagnosticar. | Escribimos la revisión manualmente y aplicamos `python -m alembic upgrade head` sobre la base temporal. |
 | 12 | Usar `Invoke-RestMethod` en lugar de `curl.exe` para enviar JSON. Usar `-o $null` y `Select-Object -First 1` en lugar de `-o NUL` y `head -1` (Problema técnico: PowerShell). | Los comandos `curl.exe` daban `JSON decode error` y no podíamos probar los endpoints. | Adaptamos todos los comandos de prueba a PowerShell. |
+| 13 | Refactor de `database.py`: eliminar `sesion = SessionLocal()`, crear `get_db` como generador con `yield`, y usar `Depends(get_db)` en todas las rutas. | Cumple la restricción B3 del taller ("sesión por petición"). | Nada, se implementó tal cual. |
+| 14 | Reemplazar todo el contenido de `alembic/env.py` con una versión que importa Base y los modelos, configura `target_metadata = Base.metadata`, y usa `DATABASE_URL` desde `config.py`. | No era un simple arreglo de indentación. El `env.py` original tenía `target_metadata = None`, lo que impedía que `Alembic` detectara las tablas. Además, no importaba los modelos ni configuraba la URL. Sin estos cambios, `alembic revision --autogenerate` generaría una migración vacía. | Se reemplazó el archivo completo (no solo se editó una línea). Se ajustó el `sys.path` para que los imports funcionaran desde la carpeta `alembic/`. |
+| 15 | Endpoint GET /health que ejecuta SELECT 1 y devuelve {"status": "ok", "database": "ok"}. Si la BD falla, lanza HTTPException(503). | Cumple la restricción B10 del taller. Verifica la base de datos de forma simple y correcta. Además, incluimos HTTPException desde el principio para que el endpoint ya maneje errores correctamente y no haya que corregirlo después. | Nada, se implementó tal cual, incluyendo el HTTPException |
+| 16 | Cambiar return {"error": ...} por raise HTTPException(status_code=404, detail=...). | Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
 | 1 |  |  |  |
 | 1 |  |  |  |
 
@@ -69,4 +81,5 @@
 | 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
+
 | 1 |  |  |  |
