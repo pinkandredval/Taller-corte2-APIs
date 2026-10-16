@@ -29,8 +29,8 @@
 | 16 | A | Kevin | "¿Cómo hacer que `GET /polizas/{id}` devuelva `404` si no existe?" |
 | 17 | A | Kevin | "¿Cómo hacer que `POST /polizas` devuelva `201`?" |
 | 18 | A | Kevin | "¿Cómo hacer que `POST /polizas` devuelva `409` si el número ya existe?" |
-| 19 | A |  | "" |
-| 20 | A |  | "" |
+| 19 | A | Kevin | "¿Cómo agregar `response_model` a todas las rutas y definir esquemas de salida?" |
+| 20 | A | Kevin | ""¿El status_code=201 en POST /polizas/{id}/siniestros es parte de H14 o es otro hallazgo?"" |
 | 21 | A |  | "" |
 | 22 | A |  | "" |
 | 23 | A |  | "" |
@@ -61,7 +61,7 @@
 | 16 | Cambiar `return {"error": ...}` por `raise HTTPException(status_code=404, detail=...)`. | Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
 | 17 | Añadir `status_code=201` al decorador `@app.post("/polizas")`. |   Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
 | 18 | Capturar `IntegrityError`, hacer rollback y lanzar `HTTPException(409)` | Es la forma correcta de manejar conflictos de unicidad. Cumple la restricción B6 del taller. | Nada, se implementó tal cual.|
-| 1 |  |  |  |
+| 19 | Definir esquemas de salida (`PolizaSalida`, `SiniestroSalida`, `PrediccionSalida`, `ScoreSalida`, `ResumenSalida`, `HealthSalida`, `SiniestroConPoliza`), declararlos con `response_model` en cada ruta y `status_code=201` donde haga falta. | Cumple la restricción B6 del taller. Además, resuelve H20 (ocultar `token_firma`). | Se reutilizaron los esquemas que ya existían; solo se añadieron los que faltaban, ademas se dejo el `status_code=201` para otro hallazgo. |
 | 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
@@ -80,8 +80,8 @@
 | 10 | Unificar H13 (PUT no parcial) con H18 (`tipo` sin validar).| Son defectos distintos: H13 es M6 · 5 y H18 es M7 · 4. Además, tienen causas y soluciones distintas (`model_dump()` sin `exclude_unset` vs. `Literal` faltante). Fusionarlos confundiría al calificador. | Se mantuvieron separados. H13 es fila independiente; H18 se unifica solo con H19. |
 | 12 | Usar `curl.exe` con `-o NUL` y `head -1` para los comandos de evidencia. | En PowerShell, `-o NUL` no funciona correctamente (devuelve `422000` en lugar de `422`), y `head -1` no existe (es un comando de Linux). | Usamos `-o $null` en lugar de `-o NUL`, y `Select-Object -First 1` en lugar de `head -1`. |
 | 12 | Usar `curl.exe` para enviar JSON en PowerShell. | PowerShell rompe las comillas anidadas del JSON, dando `JSON decode error`. No podíamos probar los endpoints. | Usamos `Invoke-RestMethod` con `ConvertTo-Json`, que maneja el JSON correctamente. |
-| 1 |  |  |  |
-| 1 |  |  |  |
+| 19 | Eliminar las funciones `_poliza` y `_siniestro` y devolver objetos ORM directamente. | Ya había código avanzado por una compañera que usaba esas funciones; cambiarlo implicaba más trabajo y riesgo de romper algo. | Se mantuvieron las funciones `_poliza` y `_siniestro`; `response_model` valida y filtra los diccionarios. |
+| 20 | Incluir `status_code=201` como parte de H14. | Son defectos distintos: H14 es "falta `response_model`"; H21 es "`falta status_code=201`". El taller pide documentar cada defecto por separado. | Se separaron en H14 y H21. |
 | 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |

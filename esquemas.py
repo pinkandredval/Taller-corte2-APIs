@@ -85,3 +85,16 @@ class ResumenSalida(BaseModel):
     n_siniestros: int
     monto_total: float
     
+class HealthSalida(BaseModel):
+    status: str
+    database: str
+
+
+class SiniestroConPoliza(BaseModel):
+    id: int
+    poliza_id: int
+    numero_poliza: str
+    fecha: date
+    monto: float
+    descripcion: str
+    estado: str

@@ -16,6 +16,7 @@ from database import Base, get_db
 from esquemas import (
     PolizaActualizacion, PolizaEntrada, PuntuacionEntrada, SiniestroEntrada,
     PolizaSalida, SiniestroSalida, PrediccionSalida, ScoreSalida, ResumenSalida,
+    HealthSalida, SiniestroConPoliza,
 )
 from modelos import Poliza, Prediccion, Siniestro
 
@@ -26,7 +27,7 @@ with open(config.RUTA_MODELO, "rb") as fh:
 
 app = FastAPI(title="Pólizas API", version="0.1.0")
 
-@app.get("/health")
+@app.get("/health", response_model=HealthSalida)
 def health(db: Session = Depends(get_db)):
     """Verifica que el servicio y la base de datos responden."""
     try:
@@ -104,7 +105,7 @@ def actualizar_poliza(id_poliza: int, datos: PolizaActualizacion, db: Session = 
     return _poliza(poliza)
 
 
-@app.post("/polizas/{id_poliza}/siniestros")
+@app.post("/polizas/{id_poliza}/siniestros", status_code=201, response_model=SiniestroSalida)
 def declarar_siniestro(id_poliza: int, datos: SiniestroEntrada, db: Session = Depends(get_db)):
     siniestro = Siniestro(poliza_id=id_poliza, fecha=datos.fecha, monto=datos.monto,
                           descripcion=datos.descripcion, estado=datos.estado)
@@ -115,12 +116,12 @@ def declarar_siniestro(id_poliza: int, datos: SiniestroEntrada, db: Session = De
             "monto": siniestro.monto, "descripcion": siniestro.descripcion, "estado": siniestro.estado}
 
 
-@app.get("/siniestros")
+@app.get("/siniestros", response_model=list[SiniestroConPoliza])
 def listar_siniestros(db: Session = Depends(get_db)):
     return [_siniestro(s) for s in db.scalars(select(Siniestro).order_by(Siniestro.id))]
 
 
-@app.get("/resumen")
+@app.get("/resumen", response_model=list[ResumenSalida])
 def resumen(db: Session = Depends(get_db)):
     filas = []
     for p in db.scalars(select(Poliza).order_by(Poliza.id)):
@@ -129,7 +130,7 @@ def resumen(db: Session = Depends(get_db)):
     return filas
 
 
-@app.post("/score")
+@app.post("/score", response_model=ScoreSalida)
 def puntuar(datos: PuntuacionEntrada, db: Session = Depends(get_db)):
     poliza = db.scalar(select(Poliza).where(Poliza.numero == datos.numero))
     if poliza is None:
@@ -145,7 +146,7 @@ def puntuar(datos: PuntuacionEntrada, db: Session = Depends(get_db)):
             "alto_riesgo": prediccion.alto_riesgo}
 
 
-@app.get("/predicciones")
+@app.get("/predicciones", response_model=list[PrediccionSalida])
 def listar_predicciones(db: Session = Depends(get_db)):
     return [{"id": pr.id, "poliza_id": pr.poliza_id, "puntaje": pr.puntaje,
              "alto_riesgo": pr.alto_riesgo, "creado_en": pr.creado_en}
