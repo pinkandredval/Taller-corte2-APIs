@@ -107,6 +107,9 @@ def actualizar_poliza(id_poliza: int, datos: PolizaActualizacion, db: Session = 
 
 @app.post("/polizas/{id_poliza}/siniestros", status_code=201, response_model=SiniestroSalida)
 def declarar_siniestro(id_poliza: int, datos: SiniestroEntrada, db: Session = Depends(get_db)):
+    poliza = db.get(Poliza, id_poliza)
+    if poliza is None:
+        raise HTTPException(status_code=404, detail=f"no existe la póliza {id_poliza}")
     siniestro = Siniestro(poliza_id=id_poliza, fecha=datos.fecha, monto=datos.monto,
                           descripcion=datos.descripcion, estado=datos.estado)
     db.add(siniestro)
@@ -134,7 +137,7 @@ def resumen(db: Session = Depends(get_db)):
 def puntuar(datos: PuntuacionEntrada, db: Session = Depends(get_db)):
     poliza = db.scalar(select(Poliza).where(Poliza.numero == datos.numero))
     if poliza is None:
-        return {"error": f"no existe la póliza {datos.numero}"}
+         raise HTTPException(status_code=404, detail=f"no existe la póliza {datos.numero}")
     rasgos = [[poliza.prima, len(poliza.siniestros), sum(s.monto for s in poliza.siniestros),
                (date.today() - poliza.fecha_inicio).days]]
     puntaje = float(modelo.predict_proba(rasgos)[0][1])

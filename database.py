@@ -22,7 +22,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 @event.listens_for(Engine, "connect")
 def activar_fk_sqlite(dbapi_conn, connection_record):
-    """Activa PRAGMA foreign_keys en SQLite (H18)."""
+    """Activa PRAGMA foreign_keys en SQLite (H22)."""
     if isinstance(dbapi_conn, sqlite3.Connection):
         cursor = dbapi_conn.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")

@@ -31,9 +31,9 @@
 | 18 | A | Kevin | "¿Cómo hacer que `POST /polizas` devuelva `409` si el número ya existe?" |
 | 19 | A | Kevin | "¿Cómo agregar `response_model` a todas las rutas y definir esquemas de salida?" |
 | 20 | A | Kevin | ""¿El status_code=201 en POST /polizas/{id}/siniestros es parte de H14 o es otro hallazgo?"" |
-| 21 | A |  | "" |
-| 22 | A |  | "" |
-| 23 | A |  | "" |
+| 21 | A | Valentina | "¿Cómo activar `PRAGMA foreign_keys` en `SQLite` y cómo documentarlo?" |
+| 22 | A | valentina | "¿Cómo hacer que POST /score devuelva 404 si la póliza no existe?" |
+| 23 | A | Valentina | "¿Cómo hacer que `POST /polizas/{id}/siniestros` verifique que la póliza exista antes de crear el siniestro?" |
 | 24 | A |  | "" |
 
 
@@ -62,9 +62,9 @@
 | 17 | Añadir `status_code=201` al decorador `@app.post("/polizas")`. |   Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
 | 18 | Capturar `IntegrityError`, hacer rollback y lanzar `HTTPException(409)` | Es la forma correcta de manejar conflictos de unicidad. Cumple la restricción B6 del taller. | Nada, se implementó tal cual.|
 | 19 | Definir esquemas de salida (`PolizaSalida`, `SiniestroSalida`, `PrediccionSalida`, `ScoreSalida`, `ResumenSalida`, `HealthSalida`, `SiniestroConPoliza`), declararlos con `response_model` en cada ruta y `status_code=201` donde haga falta. | Cumple la restricción B6 del taller. Además, resuelve H20 (ocultar `token_firma`). | Se reutilizaron los esquemas que ya existían; solo se añadieron los que faltaban, ademas se dejo el `status_code=201` para otro hallazgo. |
-| 1 |  |  |  |
-| 1 |  |  |  |
-| 1 |  |  |  |
+| 21 | Añadir un event listener en `database.py` que ejecute `PRAGMA foreign_keys=ON` al conectar con `SQLite`, usando `@event.listens_for(Engine, "connect")`. | Es la forma correcta de activar las claves foráneas en `SQLite` (M9 · 7). Evita registros huérfanos. Se ejecuta en cada conexión nueva, garantizando que siempre esté activo. | Nada, se implementó tal cual. |
+| 22 | Cambiar `return {"error": ...}` por `raise HTTPException(status_code=404, detail=...)` en el endpoint `/score`. | Es la forma correcta de indicar "no encontrado" en FastAPI. Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
+| 23 | Añadir `poliza = db.get(Poliza, id_poliza)` y lanzar `HTTPException(404)` si es `None`. | Es la forma correcta de evitar registros huérfanos. Cumple la restricción B6 del taller (404 si la póliza no existe). | Nada, se implementó tal cual. |
 | 1 |  |  |  |
 | 1 |  |  |  |
 
