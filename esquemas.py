@@ -1,5 +1,5 @@
 """Esquemas de entrada."""
-from datetime import date
+from datetime import date,datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -43,3 +43,45 @@ class PolizaActualizacion(BaseModel):
 
 class PuntuacionEntrada(BaseModel):
     numero: str = Field(min_length=8, max_length=20)
+
+class SiniestroSalida(BaseModel):
+    id: int
+    fecha: date
+    monto: float
+    descripcion: str
+    estado: str
+
+    model_config = {"from_attributes": True}
+
+class PolizaSalida(BaseModel):
+    id: int
+    numero: str
+    asegurado: Optional[str]
+    tipo: Optional[str]
+    prima: float
+    fecha_inicio: date
+    fecha_fin: Optional[date]
+    siniestros: list[SiniestroSalida] = []
+    model_config = {"from_attributes": True}
+
+class PrediccionSalida(BaseModel):
+    id: int
+    poliza_id: int
+    puntaje: float
+    alto_riesgo: bool
+    creado_en: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ScoreSalida(BaseModel):
+    numero: str
+    puntaje: float
+    alto_riesgo: bool
+
+
+class ResumenSalida(BaseModel):
+    numero: str
+    n_siniestros: int
+    monto_total: float
+    

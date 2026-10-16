@@ -13,7 +13,10 @@ from sqlalchemy.exc import IntegrityError
 
 import config
 from database import Base, get_db
-from esquemas import PolizaActualizacion, PolizaEntrada, PuntuacionEntrada, SiniestroEntrada
+from esquemas import (
+    PolizaActualizacion, PolizaEntrada, PuntuacionEntrada, SiniestroEntrada,
+    PolizaSalida, SiniestroSalida, PrediccionSalida, ScoreSalida, ResumenSalida,
+)
 from modelos import Poliza, Prediccion, Siniestro
 
 
@@ -51,16 +54,18 @@ def _poliza(p: Poliza) -> dict:
     }
 
 
-@app.post("/polizas", status_code=201)
+@app.post("/polizas", status_code=201, response_model=PolizaSalida)
 def crear_poliza(datos: PolizaEntrada, db: Session = Depends(get_db)):
     poliza = Poliza(numero=datos.numero, asegurado=datos.asegurado, tipo=datos.tipo,
                     prima=datos.prima, fecha_inicio=datos.fecha_inicio, fecha_fin=datos.fecha_fin,
                     token_firma=firmar(datos.numero))
     for s in datos.siniestros:
         poliza.siniestros.append(Siniestro(
-            fecha=date.fromisoformat(str(s.get("fecha", date.today()))),
-            monto=s.get("monto", 0), descripcion=s.get("descripcion", ""),
-            estado=s.get("estado", "abierto")))
+        fecha=s.fecha,
+        monto=s.monto,
+        descripcion=s.descripcion,
+        estado=s.estado,
+    ))
     db.add(poliza)
     try:
         db.commit()
@@ -74,12 +79,12 @@ def crear_poliza(datos: PolizaEntrada, db: Session = Depends(get_db)):
     return poliza
 
 
-@app.get("/polizas")
+@app.get("/polizas", response_model=list[PolizaSalida])
 def listar_polizas(db: Session = Depends(get_db)):
     return [_poliza(p) for p in db.scalars(select(Poliza).order_by(Poliza.id))]
 
 
-@app.get("/polizas/{id_poliza}")
+@app.get("/polizas/{id_poliza}", response_model=PolizaSalida)
 def obtener_poliza(id_poliza: int, db: Session = Depends(get_db)):
     poliza = db.get(Poliza, id_poliza)
     if poliza is None:
@@ -87,7 +92,7 @@ def obtener_poliza(id_poliza: int, db: Session = Depends(get_db)):
     return _poliza(poliza)
 
 
-@app.put("/polizas/{id_poliza}")
+@app.put("/polizas/{id_poliza}", response_model=PolizaSalida)
 def actualizar_poliza(id_poliza: int, datos: PolizaActualizacion, db: Session = Depends(get_db)):
     poliza = db.get(Poliza, id_poliza)
     if poliza is None:
