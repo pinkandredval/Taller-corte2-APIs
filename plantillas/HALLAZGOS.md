@@ -36,12 +36,27 @@
 | H22 | No se activan las claves foraneas en `SQLite` | Falta `PRAGMA foreign_keys=ON` en la conexion a `SQLite` | M9 · 7. SQLite local e integración con `FastAPI` | `database.py` | `grep -n "PRAGMA" database.py` | *(vacío)* | Añadir event listener con `PRAGMA foreign_keys=ON` |
 | H23 | `POST /score` con numero inexistente devuelve 200 con mensaje de error | El handler devuelve dict en lugar de lanzar `HTTPException(404)` | M6 · 5. Routing y CRUD | `main.py` | `curl -s -o /dev/null -w "%{http_code}" -X POST localhost:8000/score -H "Content-Type: application/json" -d '{"numero":"POL-NO-EXISTE"}'` | `500` | Lanzar `HTTPException(404)` |
 | H24 | `POST /polizas/{id}/siniestros` crea siniestros con `poliza_id` inexistente | No se verifica que la póliza exista antes de crear el siniestro | M6 · 5. Routing y CRUD | `main.py` | `curl -s -o /dev/null -w "%{http_code}" -X POST localhost:8000/polizas/99999/siniestros -H "Content-Type: application/json" -d '{"fecha":"2026-01-15","monto":100,"descripcion":"Test","estado":"abierto"}'` | `500` (incorrecto: debería ser 404) | Verificar `db.get(Poliza, id_poliza)` y lanzar `HTTPException(404)` si no existe |
-| H22 | | | | | | | |
-| H23 | | | | | | | |
-| H24 | | | | | | | |
+| H25 | `PUT /polizas/99999` devuelve 500 en lugar de 404 | El handler devuelve dict en lugar de lanzar `HTTPException(404)` | M6 · 5. Routing y CRUD | `main.py` | `python -c "import httpx; print(httpx.put('http://localhost:8000/polizas/99999', json={'prima': 100}).status_code)"` | `500` | Lanzar `HTTPException(404)` cambiando `return {"error": f"no existe la póliza {id_poliza}"}` por `raise HTTPException(status_code=404, detail="...")` |
+| H26 | `main.py` carga el modelo `pickle` en el nivel superior | El modelo se carga al importar el módulo, lo que impide que el servidor arranque si el archivo no existe | M11 · 10. Ejemplo integrador | `main.py` | este es para mirar el error: `python -c "print('pickle.load' in open('main.py').read())"` y este es para mirar que arreglo funciona, debe dar false: `python -c "print('modelo = pickle.load(fh)' in open('main.py').read())"` | `True` | Usar `@lru_cache` y `Depends` para cargar el modelo |
+| H27 | `main.py` usa variables globales de `config.py` | No se inyecta la configuración con `Depends` | M8 · 4. Inyección de dependencias con Depends | `main.py` | `python -c "print('config.SECRETO_FIRMA' in open('main.py').read())"` | `True` | Inyectar `Settings` con `Depends(get_settings)` y eliminar variables globales |
+| H28 | `GET /polizas` devuelve todos los registros sin límite | Falta paginación en el endpoint | M6 · 5. Routing y CRUD | `main.py` | `python -c "import httpx; print(len(httpx.get('http://localhost:8000/polizas').json()))"` | `2` | Añadir `skip` y `limit` a la consulta |
+| H29 | `main.py` construye diccionarios manualmente en `_poliza` y `_siniestro` | Código redundante que expone campos internos (token_firma) | M6 · 5. Routing y CRUD | `main.py` | `python -c "print('def _poliza' in open('main.py').read())"` | `True` | Eliminar funciones y devolver objetos ORM directamente |
+| H30 | | | | | | | |
+| H31 | | | | | | | |
+| H32 | | | | | | | |
+| H33 | | | | | | | |
+| H34 | | | | | | | |
+| H35 | | | | | | | |
+| H36 | | | | | | | |
+| H37 | | | | | | | |
+| H38 | | | | | | | |
+| H39 | | | | | | | |
+| H40 | | | | | | | |
+| H41 | | | | | | | |
 | H42 | `sembrar_datos.py` falla si las pólizas ya existen | La función `sembrar` no maneja el código 409  | M10 · 7. Reproducibilidad sin Docker | `sembrar_datos.py` | `python sembrar_datos.py --polizas 1` (ejecutado dos veces) | `RuntimeError: POST /polizas devolvió 409 en la póliza 1: {"detail":"El número de póliza POL-2026-00001 ya existe"}` | En `sembrar()`, al recibir un 409, se busca el ID de la póliza existente y se añade a la lista `ids`|
 | H43 | `sembrar_datos.py` genera números de póliza que pueden repetirse entre ejecuciones | El número se basa solo en el índice y el prefijo | M10 · 7. Reproducibilidad sin Docker | `sembrar_datos.py` | `python sembrar_datos.py --prefijo POL-C --polizas 1` (ejecutado dos veces) | `RuntimeError: POST /polizas devolvió 409` | Se soluciona con la misma lógica de H34: el script recupera el ID si el número ya existe |
 | H44 | `sembrar_datos.py` lanza un error de conexión poco amigable si el servidor no está corriendo | El script no captura `httpx.ConnectError` | M10 · 7. Reproducibilidad sin Docker | `sembrar_datos.py` | `python sembrar_datos.py` (sin el servidor corriendo) | ` httpx.ConnectError: [Errno 111] Connection refused ` | En `main()`, se captura `httpx.ConnectError` y se muestra un mensaje amigable con `sys.exit(1)` |
+| H45 | `GET /siniestros` devuelve 500 porque Pydantic no encuentra `numero_poliza` en el ORM | El esquema `SiniestroConPoliza` espera `numero_poliza`, pero el modelo `Siniestro` solo tiene `poliza` (relación) | M6 · 5. Routing y CRUD | `main.py` | `python -c "print('numero_poliza' in open('main.py').read())"` | `True` | Mapear manualmente a `SiniestroConPoliza` en el endpoint |
 
 
 **Reglas que se verifican automáticamente:**
