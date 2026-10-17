@@ -13,7 +13,7 @@ class SiniestroEntrada(BaseModel):
 
 
 class PolizaEntrada(BaseModel):
-    numero: str = Field(min_length=8, max_length=20, pattern=r"^POL-\d{4}-\d{5}$", description="Formato POL-AAAA-NNNNN")
+    numero: str = Field(min_length=8, max_length=20, pattern=r"^POL-[\w-]+$", description="Formato POL-AAAA-NNNNN")
     asegurado: str = Field(min_length=3, max_length=80)
     tipo: Literal["auto", "hogar", "vida"] = Field(description="auto, hogar o vida")
     prima: float = Field(gt=0, description="Prima anual, en pesos")
@@ -42,7 +42,7 @@ class PolizaActualizacion(BaseModel):
 
 
 class PuntuacionEntrada(BaseModel):
-    numero: str = Field(min_length=8, max_length=20, pattern=r"^POL-\d{4}-\d{5}$", description="Formato POL-AAAA-NNNNN")
+    numero: str = Field(min_length=8, max_length=20, pattern=r"^POL-[\w-]+$", description="Formato POL-AAAA-NNNNN")
 
 class SiniestroSalida(BaseModel):
     id: int
@@ -67,6 +67,7 @@ class PolizaSalida(BaseModel):
 class PrediccionSalida(BaseModel):
     id: int
     poliza_id: int
+    numero: str  # <-- Añadir esta línea
     puntaje: float
     alto_riesgo: bool
     creado_en: datetime

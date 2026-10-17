@@ -13,7 +13,8 @@ from database import Base
 from modelos import Poliza, Siniestro, Prediccion  # noqa: F401
 
 # Importar la URL de nuestra config (con alias para no chocar con 'config')
-from config import DATABASE_URL as APP_DATABASE_URL
+from config import get_settings
+APP_DATABASE_URL = get_settings().database_url
 
 # Objeto Config de Alembic (¡no confundir con nuestro config.py!)
 config = context.config

@@ -1,0 +1,14 @@
+# Las que el taller exige en versión específica (fijamos límites)
+sqlalchemy>=2.0,<2.1
+pydantic>=2.0,<3.0
+pydantic-settings>=2.0,<3.0
+
+# El resto, que pip-compile busque la mejor
+fastapi
+uvicorn
+python-dotenv
+scikit-learn
+numpy
+pytest
+httpx
+alembic

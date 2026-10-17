@@ -148,7 +148,18 @@ def puntuar(datos: PuntuacionEntrada, db: Session = Depends(get_db), modelo=Depe
 
 @app.get("/predicciones", response_model=list[PrediccionSalida])
 def listar_predicciones(db: Session = Depends(get_db)):
-    return db.scalars(select(Prediccion).order_by(Prediccion.id)).all()
+    predicciones = db.scalars(select(Prediccion).order_by(Prediccion.id)).all()
+    return [
+        PrediccionSalida(
+            id=p.id,
+            poliza_id=p.poliza_id,
+            numero=p.poliza.numero,  # <-- Accedemos a la relación para obtener el número
+            puntaje=p.puntaje,
+            alto_riesgo=p.alto_riesgo,
+            creado_en=p.creado_en,
+        )
+        for p in predicciones
+    ]
 
 
 if __name__ == "__main__":
