@@ -34,7 +34,11 @@
 | 21 | A | Valentina | "¿Cómo activar `PRAGMA foreign_keys` en `SQLite` y cómo documentarlo?" |
 | 22 | A | valentina | "¿Cómo hacer que POST /score devuelva 404 si la póliza no existe?" |
 | 23 | A | Valentina | "¿Cómo hacer que `POST /polizas/{id}/siniestros` verifique que la póliza exista antes de crear el siniestro?" |
-| 24 | A |  | "" |
+| 24 | C | Valentina | "¿Cómo hacer que `sembrar_datos.py` no falle cuando las pólizas ya existen (error 409)?" |
+| 25 | C | Valentina | "¿Cómo evitar que `sembrar_datos.py` se rompa si el servidor no está corriendo?" |
+| 26 | A |  | "" |
+| 27 | A |  | "" |
+| 28 | A |  | "" |
 
 
 ## Aceptado
@@ -65,6 +69,10 @@
 | 21 | Añadir un event listener en `database.py` que ejecute `PRAGMA foreign_keys=ON` al conectar con `SQLite`, usando `@event.listens_for(Engine, "connect")`. | Es la forma correcta de activar las claves foráneas en `SQLite` (M9 · 7). Evita registros huérfanos. Se ejecuta en cada conexión nueva, garantizando que siempre esté activo. | Nada, se implementó tal cual. |
 | 22 | Cambiar `return {"error": ...}` por `raise HTTPException(status_code=404, detail=...)` en el endpoint `/score`. | Es la forma correcta de indicar "no encontrado" en FastAPI. Cumple la restricción B6 del taller. | Nada, se implementó tal cual. |
 | 23 | Añadir `poliza = db.get(Poliza, id_poliza)` y lanzar `HTTPException(404)` si es `None`. | Es la forma correcta de evitar registros huérfanos. Cumple la restricción B6 del taller (404 si la póliza no existe). | Nada, se implementó tal cual. |
+| 24 | Solución H42: En `sembrar()`, capturar el código 409, hacer un `GET /polizas`, buscar el número de la póliza y extraer su `id` para añadirlo a la lista. | Es la única forma de que el script sea idempotente (que se pueda ejecutar varias veces sin fallar) y de que la lista `ids` no quede vacía. | Nada, se implementó tal cual. |
+| 24 | Optimización H42: Guardar el diccionario de la póliza en una variable `datos` antes del `POST` para no llamar dos veces a `poliza_sintetica()`. | Mejora el rendimiento y evita posibles inconsistencias si la función generadora cambiara en el futuro. | Se reemplazó la llamada doble a `poliza_sintetica()` por el uso de la variable datos. |
+| 25 | Solución H44: En `main()`, envolver la conexión en un `try/except` `httpx.ConnectError` para imprimir un mensaje amigable y salir con `sys.exit(1)`. | Evita que el usuario vea un traceback largo y confuso cuando olvida levantar el servidor. | Nada, se implementó tal cual. |
+| 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
 
@@ -82,7 +90,7 @@
 | 12 | Usar `curl.exe` para enviar JSON en PowerShell. | PowerShell rompe las comillas anidadas del JSON, dando `JSON decode error`. No podíamos probar los endpoints. | Usamos `Invoke-RestMethod` con `ConvertTo-Json`, que maneja el JSON correctamente. |
 | 19 | Eliminar las funciones `_poliza` y `_siniestro` y devolver objetos ORM directamente. | Ya había código avanzado por una compañera que usaba esas funciones; cambiarlo implicaba más trabajo y riesgo de romper algo. | Se mantuvieron las funciones `_poliza` y `_siniestro`; `response_model` valida y filtra los diccionarios. |
 | 20 | Incluir `status_code=201` como parte de H14. | Son defectos distintos: H14 es "falta `response_model`"; H21 es "`falta status_code=201`". El taller pide documentar cada defecto por separado. | Se separaron en H14 y H21. |
-| 1 |  |  |  |
+| 24 | Versión inicial del código H42: Implementar la búsqueda del `ID` llamando a `poliza_sintetica()` dos veces: una para el `POST` y otra para comparar el número dentro del bucle `for p in r_get.json()`. | Aunque funcionaba, era ineficiente y propenso a errores: generaba los datos de la póliza dos veces por cada iteración. Si en el futuro `poliza_sintetica()` cambiara (por ejemplo, para usar un estado global de random o para consultar una API), el número enviado en el `POST` y el número buscado en la comparación podrían no coincidir, rompiendo la lógica. | Se rechazó la doble llamada y se optó por guardar el diccionario en una variable `datos = poliza_sintetica(...)` antes del `POST`. Así se usa la misma variable tanto para enviar la petición como para comparar el número en la búsqueda del `ID`. |
 | 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |

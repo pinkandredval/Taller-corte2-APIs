@@ -12,6 +12,7 @@ así que sirve igual antes y después de que cambien el modelado.
 """
 import argparse
 import random
+import sys
 from datetime import date, timedelta
 
 TIPOS = ["auto", "hogar", "vida"]
@@ -54,7 +55,20 @@ def sembrar(cliente, n: int, por_poliza: int = 3, semilla: int = 20262,
     """
     ids = []
     for i in range(desde, desde + n):
-        r = cliente.post("/polizas", json=poliza_sintetica(i, prefijo, por_poliza, semilla))
+        datos = poliza_sintetica(i, prefijo, por_poliza, semilla)
+        r = cliente.post("/polizas", json=datos)
+        if r.status_code == 409:
+            r_get = cliente.get("/polizas")
+            if r_get.status_code == 200:
+                for p in r_get.json():
+                    if p["numero"] == datos["numero"]: 
+                        ids.append(p["id"])
+                        break
+                else:
+                    raise RuntimeError(f"No se encontró la póliza {datos['numero']} después del 409")
+            else:
+                raise RuntimeError(f"Error al buscar póliza existente: {r_get.status_code}")
+            continue
         if r.status_code >= 400:
             raise RuntimeError(
                 f"POST /polizas devolvió {r.status_code} en la póliza {i}: {r.text[:200]}")
@@ -64,7 +78,7 @@ def sembrar(cliente, n: int, por_poliza: int = 3, semilla: int = 20262,
 
 def main():
     import httpx
-
+    
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--base", default="http://localhost:8000")
     ap.add_argument("--polizas", type=int, default=12)
@@ -73,9 +87,16 @@ def main():
     ap.add_argument("--prefijo", default="POL-2026")
     ap.add_argument("--desde", type=int, default=1)
     a = ap.parse_args()
-    with httpx.Client(base_url=a.base, timeout=60) as cliente:
-        ids = sembrar(cliente, a.polizas, a.por_poliza, a.semilla, a.prefijo, a.desde)
-    print(f"{len(ids)} pólizas creadas (ids {ids[0]}…{ids[-1]}), {a.por_poliza} siniestros cada una.")
+    try:
+        with httpx.Client(base_url=a.base, timeout=60) as cliente:
+            ids = sembrar(cliente, a.polizas, a.por_poliza, a.semilla, a.prefijo, a.desde)
+    except httpx.ConnectError:
+        print(f"Error: no se pudo conectar a {a.base}. ¿Está el servidor corriendo?")
+        sys.exit(1)
+    if not ids:
+        print("No se crearon pólizas nuevas (todas existían).")
+    else:
+        print(f"{len(ids)} pólizas creadas (ids {ids[0]}…{ids[-1]}), {a.por_poliza} siniestros cada una.")
 
 
 if __name__ == "__main__":

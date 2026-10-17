@@ -39,6 +39,10 @@
 | H22 | | | | | | | |
 | H23 | | | | | | | |
 | H24 | | | | | | | |
+| H42 | `sembrar_datos.py` falla si las pólizas ya existen | La función `sembrar` no maneja el código 409  | M10 · 7. Reproducibilidad sin Docker | `sembrar_datos.py` | `python sembrar_datos.py --polizas 1` (ejecutado dos veces) | `RuntimeError: POST /polizas devolvió 409 en la póliza 1: {"detail":"El número de póliza POL-2026-00001 ya existe"}` | En `sembrar()`, al recibir un 409, se busca el ID de la póliza existente y se añade a la lista `ids`|
+| H43 | `sembrar_datos.py` genera números de póliza que pueden repetirse entre ejecuciones | El número se basa solo en el índice y el prefijo | M10 · 7. Reproducibilidad sin Docker | `sembrar_datos.py` | `python sembrar_datos.py --prefijo POL-C --polizas 1` (ejecutado dos veces) | `RuntimeError: POST /polizas devolvió 409` | Se soluciona con la misma lógica de H34: el script recupera el ID si el número ya existe |
+| H44 | `sembrar_datos.py` lanza un error de conexión poco amigable si el servidor no está corriendo | El script no captura `httpx.ConnectError` | M10 · 7. Reproducibilidad sin Docker | `sembrar_datos.py` | `python sembrar_datos.py` (sin el servidor corriendo) | ` httpx.ConnectError: [Errno 111] Connection refused ` | En `main()`, se captura `httpx.ConnectError` y se muestra un mensaje amigable con `sys.exit(1)` |
+
 
 **Reglas que se verifican automáticamente:**
 
