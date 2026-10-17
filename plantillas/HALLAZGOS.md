@@ -41,24 +41,22 @@
 | H27 | `main.py` usa variables globales de `config.py` | No se inyecta la configuración con `Depends` | M8 · 4. Inyección de dependencias con Depends | `main.py` | `python -c "print('config.SECRETO_FIRMA' in open('main.py').read())"` | `True` | Inyectar `Settings` con `Depends(get_settings)` y eliminar variables globales |
 | H28 | `GET /polizas` devuelve todos los registros sin límite | Falta paginación en el endpoint | M6 · 5. Routing y CRUD | `main.py` | `python -c "import httpx; print(len(httpx.get('http://localhost:8000/polizas').json()))"` | `2` | Añadir `skip` y `limit` a la consulta |
 | H29 | `main.py` construye diccionarios manualmente en `_poliza` y `_siniestro` | Código redundante que expone campos internos (token_firma) | M6 · 5. Routing y CRUD | `main.py` | `python -c "print('def _poliza' in open('main.py').read())"` | `True` | Eliminar funciones y devolver objetos ORM directamente |
-| H30 | | | | | | | |
-| H31 | | | | | | | |
-| H32 | | | | | | | |
-| H33 | | | | | | | |
-| H34 | | | | | | | |
-| H35 | | | | | | | |
-| H36 | | | | | | | |
-| H37 | | | | | | | |
-| H38 | | | | | | | |
-| H39 | | | | | | | |
-| H40 | | | | | | | |
-| H41 | | | | | | | |
+| H30 | `POST /polizas/{id}/siniestros` acepta cualquier valor en estado | El campo estado es `str` sin restricción | M7 · 4. El poder de Field | `esquemas.py` | `python -c "import httpx; print(httpx.post('http://localhost:8000/polizas/1/siniestros', json={'fecha':'2026-01-15','monto':100,'descripcion':'Test','estado':'invalido'}).status_code)"` | `201` | Cambiar a `Literal["abierto", "pagado", "rechazado"]` |
+| H31 | `POST /polizas` y `POST /score` aceptan números que no cumplen el patrón `POL-AAAA-NNNNN` | Los campos `numero` en `PolizaEntrada` y `PuntuacionEntrada` no validan el patrón con regex | M7 · 4. El poder de Field | `esquemas.py` | `python -c "import httpx; print(httpx.post('http://localhost:8000/polizas', json={'numero':'POL-123','asegurado':'Test','tipo':'auto','prima':100,'fecha_inicio':'2026-01-01','fecha_fin':'2026-12-31'}).status_code)"` | `201` | Añadir `pattern=r"^POL-\d{4}-\d{5}$"` a `Field` en ambos esquemas |
+| H32 | Las claves foráneas no tienen `ondelete="CASCADE"` | Falta la configuración de borrado en las FKs | M9 · 6. Modelado de BD y migraciones con Alembic | `modelos.py` | `python -c "print('ondelete' in open('modelos.py').read())"` | `False` | Añadir `ondelete="CASCADE"` a las FKs de Siniestro y Prediccion |
+| H33 | Las relaciones no tienen `cascade="all, delete-orphan"` | Falta configuración de cascada en `relationship` | M9 · 6. Modelado de BD y migraciones con Alembic | `modelos.py` | `python -c "print('delete-orphan' in open('modelos.py').read())"` | `False` | Añadir `cascade="all, delete-orphan"` a las relaciones en Poliza |
+| H34 | `database.py` crea el motor de BD al importar el módulo | El `engine` se instancia en el nivel superior, impidiendo cambiar `DATABASE_URL` en runtime | M8 · 4. Inyección de dependencias con Depends | `database.py` | `python -c "print('engine = create_engine' in open('database.py').read())"` | `True` | Encapsular en `get_engine()` con `@lru_cache` y `get_settings()` |
+| H35 | `database.py` usa `config.DATABASE_URL` en lugar de `get_settings()` | Acoplamiento a variable global de configuración | M8 · 4. Inyección de dependencias con Depends | `database.py` | `python -c "print('config.DATABASE_URL' in open('database.py').read())"` | `True` | Usar `get_settings()` dentro de `get_engine()` |
+| H36 | El `Dockerfile` usa `python:latest` en lugar de una versión fijada | Etiqueta flotante que impide la reproducibilidad | M11 · 7. Imagen base slim-bookworm | `Dockerfile` | `python -c "print('FROM python:latest' in open('Dockerfile').read())"` | `True` | Usar `python:3.11.9-slim-bookworm` |
+| H37 | El `Dockerfile` no usa multi-stage build | No separa la construcción de la ejecución | M11 · 9. Multi-stage builds | `Dockerfile` | `python -c "print('AS builder' in open('Dockerfile').read())"` | `False` | Usar multi-stage build |
+| H38 | El contenedor corre como `root` | Falta la instrucción `USER` | M11 · 12. Conclusión y buenas prácticas | `Dockerfile` | `python -c "print('USER appuser' in open('Dockerfile').read())"` | `False` | Crear usuario no root y usar `USER appuser` |
+| H39 | `CMD` usa `--reload` y `--host 127.0.0.1` | Configuración de desarrollo en producción | M11 · 6. Estructura de un Dockerfile | `Dockerfile` | `python -c "print('--reload' in open('Dockerfile').read())"` | `True` | Usar `--host 0.0.0.0` sin `--reload` |
+| H40 | El `Dockerfile` no tiene `HEALTHCHECK` | Falta verificación de salud | M11 · 10. Ejemplo integrador | `Dockerfile` | `python -c "print('HEALTHCHECK' in open('Dockerfile').read())"` | `False` | Añadir `HEALTHCHECK` |
+| H41 | `config.py` expone variables globales de configuración (deuda técnica) | Se dejó un parche temporal para no romper el código antiguo | M8 · 4. Inyección de dependencias con Depends | `config.py` | `python -c "print('SECRETO_FIRMA = settings.secreto_firma' in open('config.py').read())"` | `True` | Eliminar variables globales y usar `Depends(get_settings)` en main.py y database.py |
 | H42 | `sembrar_datos.py` falla si las pólizas ya existen | La función `sembrar` no maneja el código 409  | M10 · 7. Reproducibilidad sin Docker | `sembrar_datos.py` | `python sembrar_datos.py --polizas 1` (ejecutado dos veces) | `RuntimeError: POST /polizas devolvió 409 en la póliza 1: {"detail":"El número de póliza POL-2026-00001 ya existe"}` | En `sembrar()`, al recibir un 409, se busca el ID de la póliza existente y se añade a la lista `ids`|
 | H43 | `sembrar_datos.py` genera números de póliza que pueden repetirse entre ejecuciones | El número se basa solo en el índice y el prefijo | M10 · 7. Reproducibilidad sin Docker | `sembrar_datos.py` | `python sembrar_datos.py --prefijo POL-C --polizas 1` (ejecutado dos veces) | `RuntimeError: POST /polizas devolvió 409` | Se soluciona con la misma lógica de H34: el script recupera el ID si el número ya existe |
 | H44 | `sembrar_datos.py` lanza un error de conexión poco amigable si el servidor no está corriendo | El script no captura `httpx.ConnectError` | M10 · 7. Reproducibilidad sin Docker | `sembrar_datos.py` | `python sembrar_datos.py` (sin el servidor corriendo) | ` httpx.ConnectError: [Errno 111] Connection refused ` | En `main()`, se captura `httpx.ConnectError` y se muestra un mensaje amigable con `sys.exit(1)` |
 | H45 | `GET /siniestros` devuelve 500 porque Pydantic no encuentra `numero_poliza` en el ORM | El esquema `SiniestroConPoliza` espera `numero_poliza`, pero el modelo `Siniestro` solo tiene `poliza` (relación) | M6 · 5. Routing y CRUD | `main.py` | `python -c "print('numero_poliza' in open('main.py').read())"` | `True` | Mapear manualmente a `SiniestroConPoliza` en el endpoint |
-
-
 **Reglas que se verifican automáticamente:**
 
 - `Módulo · Sección` debe citar una lección que exista en los módulos 6 a 11, con el

@@ -24,12 +24,3 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Devuelve la configuración cacheada (se instancia una sola vez)."""
     return Settings()
-
-# --- Variables de módulo temporales para compatibilidad ---
-# Se eliminarán en la Parte B cuando se refactorice database.py y main.py.
-settings = get_settings()
-SECRETO_FIRMA = settings.secreto_firma
-CLAVE_API_REASEGURO = settings.clave_api_reaseguro
-DATABASE_URL = settings.database_url
-RUTA_MODELO = settings.ruta_modelo
-UMBRAL_ALTO_RIESGO = settings.umbral_alto_riesgo

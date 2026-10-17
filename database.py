@@ -1,23 +1,24 @@
 """Conexión a la base de datos."""
 
 import sqlite3
+from functools import lru_cache
 
 from sqlalchemy import create_engine, event, Engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-import config
+from config import get_settings
 
 
 class Base(DeclarativeBase):
     pass
 
 
-engine = create_engine(
-    config.DATABASE_URL,
-    connect_args={"check_same_thread": False} if config.DATABASE_URL.startswith("sqlite") else {},
-)
-
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+@lru_cache
+def get_engine():
+    """Crea el motor de BD una sola vez, leyendo la configuración."""
+    settings = get_settings()
+    connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
+    return create_engine(settings.database_url, connect_args=connect_args)
 
 
 @event.listens_for(Engine, "connect")
@@ -31,6 +32,7 @@ def activar_fk_sqlite(dbapi_conn, connection_record):
 
 def get_db():
     """Entrega una sesión por petición. Se cierra al finalizar."""
+    SessionLocal = sessionmaker(bind=get_engine(), autoflush=False, autocommit=False)
     db = SessionLocal()
     try:
         yield db

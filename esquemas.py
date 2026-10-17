@@ -9,11 +9,11 @@ class SiniestroEntrada(BaseModel):
     fecha: date
     monto: float = Field(gt=0, description="Monto reclamado, en pesos")
     descripcion: str = Field(min_length=3, max_length=200)
-    estado: str = "abierto"
+    estado: Literal["abierto", "pagado", "rechazado"] = "abierto"
 
 
 class PolizaEntrada(BaseModel):
-    numero: str = Field(min_length=8, max_length=20, description="Formato POL-AAAA-NNNNN")
+    numero: str = Field(min_length=8, max_length=20, pattern=r"^POL-\d{4}-\d{5}$", description="Formato POL-AAAA-NNNNN")
     asegurado: str = Field(min_length=3, max_length=80)
     tipo: Literal["auto", "hogar", "vida"] = Field(description="auto, hogar o vida")
     prima: float = Field(gt=0, description="Prima anual, en pesos")
@@ -42,7 +42,7 @@ class PolizaActualizacion(BaseModel):
 
 
 class PuntuacionEntrada(BaseModel):
-    numero: str = Field(min_length=8, max_length=20)
+    numero: str = Field(min_length=8, max_length=20, pattern=r"^POL-\d{4}-\d{5}$", description="Formato POL-AAAA-NNNNN")
 
 class SiniestroSalida(BaseModel):
     id: int
