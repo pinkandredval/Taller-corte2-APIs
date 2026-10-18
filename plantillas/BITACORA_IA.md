@@ -36,10 +36,6 @@
 | 23 | A | Valentina | "¿Cómo hacer que `POST /polizas/{id}/siniestros` verifique que la póliza exista antes de crear el siniestro?" |
 | 24 | C | Valentina | "¿Cómo hacer que `sembrar_datos.py` no falle cuando las pólizas ya existen (error 409)?" |
 | 25 | C | Valentina | "¿Cómo evitar que `sembrar_datos.py` se rompa si el servidor no está corriendo?" |
-<<<<<<< HEAD
-| 26 | A |  | "" |
-| 27 | A |  | "" |
-| 28 | A |  | "" |
 | 26 | A | Kevin | "En el H25 ya cambié el return por raise pero sigue dando 500. ¿Qué pasa?" |
 | 27 | A | Kevin | "En el H26 ya corregí el modelo, pero el comando sigue apareciendo True." |
 | 28 | A | Kevin | "En el H27 ya hice las correcciones, pero sigue apareciendo True." |
@@ -52,17 +48,6 @@
 | 35 | A/B | Margarita | "Quiero arreglar requirements pero no con freeze... necesito que las versiones funcionen en todos los computadores." (H1) |
 | 36 | A/B | Margarita | "¿Por qué esas versiones? ¿No las estás poniendo a tu antojo?" |
 | 37 | A/B | Margarita | "Y por qué no lo hacemos con pip compile?" |
-=======
-| 26 | A | Kevin | "En el H25 ya cambié el `return` por `raise` pero sigue dando 500. ¿Qué pasa?" |
-| 27 | A | Kevin | "En el H26 ya corregí el modelo, pero el comando sigue apareciendo `True`." |
-| 28 | A | Kevin | "En el H27 ya hice las correcciones, pero sigue apareciendo `True`." |
-| 29 | A | Kevin | "En el H28 hice la corrección y sigue apareciendo `2`." |
-| 30 | A | Kevin | "Hay un problema, en el H29 me dices que ponga un `return`, pero si lo pongo el H28 me vuelve a lanzar `error`." |
-| 31 | A |  | "" |
-| 32 | A |  | "" |
-| 33 | A |  | "" |
-
->>>>>>> 686b6229f1c1e6fd6bba3dc251a165abedb6c3cb
 
 ## Aceptado
 
@@ -99,15 +84,11 @@
 | 27 | Mover la carga del modelo `pickle` a una función con `@lru_cache` y usar `Depends` para inyectarlo (H26). | Evita que el servidor falle al importar si el modelo no está, y lo carga una sola vez por proceso (M11). | Se ajustó la función para que obtenga la ruta desde `get_settings()` en lugar de `config.RUTA_MODELO`. |
 | 28 | Inyectar la configuración con `Depends(get_settings)` y pasar el secreto como parámetro a la función `firmar()` (H27). | Elimina la dependencia de variables globales y cumple la restricción B2 del taller (M8). | Se modificó la firma de `firmar(numero, secreto)` y se inyectó `settings` en las rutas. |
 | 29 | Añadir parámetros `skip` y `limit` al endpoint `GET /polizas` (H28). | Evita que el servidor colapse devolviendo miles de registros de golpe (M6). | Nada, se implementó tal cual. |
-<<<<<<< HEAD
 | 30 | Unificar la solución de H28 y H29 en `listar_polizas`: usar `.offset(skip).limit(limit)` y devolver los objetos ORM con `db.scalars(query).all()` en lugar de usar `_poliza()`. | Ambas soluciones chocaban en el mismo endpoint. Devolver ORM directamente elimina el código redundante y el error de Pydantic (M6). | Se eliminaron las funciones `_poliza` y `_siniestro` de todo el archivo. |
 | 33 | Ajustar el `pattern` del número de póliza a `r"^POL-[\w-]+$"` para que los tests del contrato (que usan `POL-CT-5F0E92`) pasen sin afectar el H31. | El patrón original era demasiado estricto y rompía los tests. El patrón nuevo valida el formato base sin rechazar los números válidos. | Se actualizó el H31 con la nueva corrección aplicada. |
 | 34 | Añadir `numero` a `PrediccionSalida` y mapear `p.poliza.numero` en `/predicciones` (H47), en lugar de devolver el ORM directo. | El esquema exige el `numero` de la póliza, pero el modelo ORM no lo tiene (está en la relación). Devolver ORM directo fallaría con `KeyError`. | Se dejó el H29 intacto y se añadió el H47 como un hallazgo nuevo. |
 | 35, 37 | Usar `pip-tools` (`pip-compile`) para generar el `requirements.txt` a partir de un `requirements.in`. | Permite fijar versiones exactas (`==`) pero resolviendo la compatibilidad de manera universal, sin atarse a los binarios locales como hace `pip freeze` (M1). | Se decidió dejar los nombres solos en el `.in` (excepto SQLAlchemy y Pydantic, que tienen límites por el taller) para que `pip-compile` elija. |
 | 1 |  |  |  |
-=======
-| 30 | Unificar la solución de H28 y H29 en `listar_polizas`: usar `.offset(skip).limit(limit)` y devolver los objetos ORM con `db.scalars(query).all()` en lugar de usar `_poliza()`. | Ambas soluciones chocaban en el mismo endpoint. Devolver ORM directamente elimina el código redundante y el error de Pydantic (M6). | Se eliminaron las funciones `_poliza` y `_siniestro` de todo el archivo. || 1 |  |  |  |
->>>>>>> 686b6229f1c1e6fd6bba3dc251a165abedb6c3cb
 | 1 |  |  |  |
 | 1 |  |  |  |
 
