@@ -45,9 +45,14 @@
 | 32 | A | Margarita | "El H42 no era un error, estaba bien identado entonces no fue un hallazgo." |
 | 33 | A | Margarita | "Para que pasen los tests de `test_contrato.py` tuve que modificar el `pattern` en `esquemas.py`. ¿Esto afecta el H31? ¿Tengo que modificar el hallazgo?" |
 | 34 | A/B | Margarita | "El test de `/predicciones` me da `KeyError: 'numero'`. Si cambio el return de `/predicciones` a ORM directo, ¿daño el hallazgo H29?" |
-| 35 | A/B | Margarita | "Quiero arreglar requirements pero no con freeze... necesito que las versiones funcionen en todos los computadores." (H1) |
+| 35 | A/B | Margarita | "Quiero arreglar `requirements` pero no con freeze... necesito que las versiones funcionen en todos los computadores." (H1) |
 | 36 | A/B | Margarita | "¿Por qué esas versiones? ¿No las estás poniendo a tu antojo?" |
-| 37 | A/B | Margarita | "Y por qué no lo hacemos con pip compile?" |
+| 37 | A/B | Margarita | "Y por qué no lo hacemos con `pip compile`?" |
+| 38 | C | Valentina | Explícame primero las diferencias de esas 4 opciones (`lazy`, `selectinload`, `joinedload`, `agregada`). |
+| 39 | C | Valentina | Creo que prefiero la `opción B` y mencionar que por intuición era mejor la `opción A` pero al medirlo era mejor la `B` por tal y tal cosa. |
+| 40 |-------|-------|-------------------------------|
+| 41 |-------|-------|-------------------------------|
+
 
 ## Aceptado
 
@@ -88,8 +93,8 @@
 | 33 | Ajustar el `pattern` del número de póliza a `r"^POL-[\w-]+$"` para que los tests del contrato (que usan `POL-CT-5F0E92`) pasen sin afectar el H31. | El patrón original era demasiado estricto y rompía los tests. El patrón nuevo valida el formato base sin rechazar los números válidos. | Se actualizó el H31 con la nueva corrección aplicada. |
 | 34 | Añadir `numero` a `PrediccionSalida` y mapear `p.poliza.numero` en `/predicciones` (H47), en lugar de devolver el ORM directo. | El esquema exige el `numero` de la póliza, pero el modelo ORM no lo tiene (está en la relación). Devolver ORM directo fallaría con `KeyError`. | Se dejó el H29 intacto y se añadió el H47 como un hallazgo nuevo. |
 | 35, 37 | Usar `pip-tools` (`pip-compile`) para generar el `requirements.txt` a partir de un `requirements.in`. | Permite fijar versiones exactas (`==`) pero resolviendo la compatibilidad de manera universal, sin atarse a los binarios locales como hace `pip freeze` (M1). | Se decidió dejar los nombres solos en el `.in` (excepto SQLAlchemy y Pydantic, que tienen límites por el taller) para que `pip-compile` elija. |
-| 1 |  |  |  |
-| 1 |  |  |  |
+| 38 | Explicación detallada de las 4 estrategias de carga (lazy, selectinload, joinedload, agregada) con sus diferencias en número de consultas, memoria y casos de uso. Recomendó selectinload para /polizas y /siniestros, joinedload para /polizas/{id} y agregada para /resumen. | Porque la explicación era clara, se alineaba con el material del curso (módulos 6 y 9) y permitía entender el impacto de cada estrategia antes de aplicarla. | Aplicamos las recomendaciones iniciales, pero luego medimos con contar_consultas.py. Para /siniestros, la medición reveló que selectinload generaba 5 consultas con 2000 pólizas (debido al chunking), así que decidimos cambiar a joinedload (ver fila 39). |
+| 39 | Aceptar el cambio de estrategia en /siniestros de selectinload a joinedload, y ayudar a redactar la justificación basada en la medición (la intuición decía selectinload, pero los números mostraron que joinedload era más eficiente). | Porque la decisión se basó en evidencia empírica (conteo de consultas) y no en suposiciones, que es exactamente lo que el taller premia. La IA ayudó a estructurar el argumento de por qué la intuición falló. | No fue necesario cambiar nada más; el código se ajustó para usar joinedload en /siniestros. |
 | 1 |  |  |  |
 
 ## Rechazado
@@ -111,7 +116,7 @@
 | 32 | Documentar el H42 (error de indentación) como un hallazgo válido. | El código ya estaba bien indentado. El taller dice que un falso positivo resta la mitad de lo que suma una correcta. | Se eliminó el H42 de la tabla de `HALLAZGOS.md`. |
 | 35 | Usar `pip freeze > requirements.txt` para congelar las versiones. | `pip freeze` congela todas las dependencias transitivas y las versiones exactas de la máquina local. Si un compañero usa otro sistema operativo (macOS/Linux), `pip install` podría fallar. | Se usó `pip-compile` con un `requirements.in` con rangos, para generar un `.txt` universal y compatible con todos los sistemas. |
 | 36 | Imponer rangos de versiones estrictos en el `.in` (ej. `fastapi>=0.110,<0.120`, `scikit-learn>=1.5,<1.6`) sin consultar. | El usuario cuestionó que se eligieran versiones "a mi antojo". Como el taller no exige versiones específicas para todo, era mejor dejar que `pip-compile` resolviera según la compatibilidad actual. | Se dejaron los nombres solos en el `.in` (excepto `sqlalchemy` y `pydantic`, que tienen límites por requerimiento del taller) y se dejó que `pip-compile` buscara las últimas compatibles. |
-| 1 |  |  |  |
+| 38 | En la primera recomendación , la IA propuso usar selectinload para el endpoint /siniestros porque es la estrategia "recomendada para listas" y evita el N+1. | Porque al medir con 2000 pólizas, selectinload generó 5 consultas en lugar de 2 (SQLAlchemy divide la consulta IN en lotes para evitar el límite de SQLite, fenómeno conocido como chunking). La intuición de que selectinload era mejor para listas falló en este caso concreto. | Cambiamos la estrategia a joinedload para /siniestros, que dio 1 consulta constante para ambos tamaños (10 y 2000 pólizas). Documentamos esta decisión en HALLAZGOS.md (sección Parte C) y en la bitácora. |
 | 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
