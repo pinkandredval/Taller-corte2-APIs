@@ -86,8 +86,16 @@
 
 ## `/polizas`
 
+Usé `selectinload` porque el endpoint devuelve una lista de pólizas, cada una con sus siniestros. Con esta estrategia, SQLAlchemy hace **2 consultas**: una para las pólizas y otra con `IN` para todos los siniestros. El número no cambia entre 10 y 2000 pólizas porque siempre son 2 consultas, independientemente del tamaño. Si hubiera usado `lazy`, habría hecho 11 y 101 consultas respectivamente (problema N+1), como se observó en la medición inicial. `selectinload` es ideal aquí porque evita el producto cartesiano de `joinedload` y mantiene el número de consultas constante.
+
 ## `/polizas/{id}`
+
+Usé `joinedload` porque el endpoint devuelve una sola póliza con sus siniestros. Con `joinedload`, SQLAlchemy hace **1 sola consulta** con JOIN. El número es 1 para ambos tamaños porque solo se pide una póliza, no muchas. Aquí el producto cartesiano no es un problema porque la relación es pequeña (3 siniestros por póliza). Con `selectinload` serían 2 consultas, pero para una sola entidad la diferencia es mínima; elegí `joinedload` por eficiencia y porque no hay duplicación significativa de filas.
 
 ## `/siniestros`
 
+**Aquí la intuición falló y la medición decidió**. Mi primera elección fue selectinload, porque es la estrategia recomendada para listas y evita el N+1. Sin embargo, al medir con 2000 pólizas, obtuve **5 consultas** en lugar de 2: SQLAlchemy divide la consulta `IN` en lotes para evitar el límite de variables de SQLite (999). Ese comportamiento (chunking) añade consultas adicionales y hace que `selectinload` no sea constante con muchos registros. Al cambiar a `joinedload`, obtuve **1 consulta** para ambos tamaños (10 y 2000 pólizas), porque la relación es muchos-a-uno (cada siniestro tiene una sola póliza) y no hay producto cartesiano. **Decisión final**: `joinedload`, porque la medición demostró que es más eficiente en este caso concreto, a pesar de que la intuición inicial sugería `selectinload`.
+
 ## `/resumen`
+
+Usé `agregada` porque no necesito los objetos completos, solo el conteo y la suma por póliza. Una consulta con `GROUP BY`, `COUNT` y `SUM` hace todo en **1 sola consulta**, sin importar el número de pólizas. Si hubiera usado `selectinload`, habría traído todos los siniestros a memoria y luego calculado en Python, lo que sería más lento y haría más consultas. Aquí la intuición de «cargar todo de una vez» falla: la estrategia agregada es la más eficiente porque delega el cálculo al motor de la base de datos.

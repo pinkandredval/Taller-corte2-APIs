@@ -8,8 +8,8 @@ from datetime import date
 from functools import lru_cache
 
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import select, text
-from sqlalchemy.orm import Session
+from sqlalchemy import select, text, func
+from sqlalchemy.orm import Session, selectinload, joinedload
 from sqlalchemy.exc import IntegrityError
 
 from config import get_settings, Settings
@@ -72,13 +72,24 @@ def crear_poliza(datos: PolizaEntrada, db: Session = Depends(get_db), settings: 
 
 @app.get("/polizas", response_model=list[PolizaSalida])
 def listar_polizas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    query = select(Poliza).order_by(Poliza.id).offset(skip).limit(limit)
+    query = (
+        select(Poliza)
+        .options(selectinload(Poliza.siniestros))  
+        .order_by(Poliza.id)
+        .offset(skip)
+        .limit(limit)
+    )
     return db.scalars(query).all()
 
 
 @app.get("/polizas/{id_poliza}", response_model=PolizaSalida)
 def obtener_poliza(id_poliza: int, db: Session = Depends(get_db)):
-    poliza = db.get(Poliza, id_poliza)
+    query = (
+        select(Poliza)
+        .options(joinedload(Poliza.siniestros)) 
+        .where(Poliza.id == id_poliza)
+    )
+    poliza = db.scalars(query).unique().first()
     if poliza is None:
         raise HTTPException(status_code=404, detail=f"no existe la póliza {id_poliza}")
     return poliza
@@ -111,8 +122,12 @@ def declarar_siniestro(id_poliza: int, datos: SiniestroEntrada, db: Session = De
 
 @app.get("/siniestros", response_model=list[SiniestroConPoliza])
 def listar_siniestros(db: Session = Depends(get_db)):
-    siniestros = db.scalars(select(Siniestro).order_by(Siniestro.id)).all()
-    # Mapeamos manualmente para incluir el numero_poliza
+    query = (
+        select(Siniestro)
+        .options(joinedload(Siniestro.poliza))  
+        .order_by(Siniestro.id)
+    )
+    siniestros = db.scalars(query).all()
     return [
         SiniestroConPoliza(
             id=s.id, poliza_id=s.poliza_id, numero_poliza=s.poliza.numero,
@@ -123,11 +138,21 @@ def listar_siniestros(db: Session = Depends(get_db)):
 
 @app.get("/resumen", response_model=list[ResumenSalida])
 def resumen(db: Session = Depends(get_db)):
-    filas = []
-    for p in db.scalars(select(Poliza).order_by(Poliza.id)):
-        filas.append({"numero": p.numero, "n_siniestros": len(p.siniestros),
-                      "monto_total": round(sum(s.monto for s in p.siniestros), 2)})
-    return filas
+    query = (
+        select(
+            Poliza.numero,
+            func.count(Siniestro.id).label("n_siniestros"),  # <-- NUEVO
+            func.coalesce(func.sum(Siniestro.monto), 0).label("monto_total")  # <-- NUEVO
+        )
+        .outerjoin(Siniestro, Poliza.id == Siniestro.poliza_id)  # <-- NUEVO
+        .group_by(Poliza.id)  # <-- NUEVO
+        .order_by(Poliza.id)
+    )
+    resultados = db.execute(query).all()
+    return [
+        {"numero": r.numero, "n_siniestros": r.n_siniestros, "monto_total": round(r.monto_total, 2)}
+        for r in resultados
+    ]
 
 
 @app.post("/score", response_model=ScoreSalida)
