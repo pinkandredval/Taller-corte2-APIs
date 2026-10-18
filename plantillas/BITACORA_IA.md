@@ -39,7 +39,18 @@
 | 26 | A |  | "" |
 | 27 | A |  | "" |
 | 28 | A |  | "" |
-
+| 26 | A | Kevin | "En el H25 ya cambié el return por raise pero sigue dando 500. ¿Qué pasa?" |
+| 27 | A | Kevin | "En el H26 ya corregí el modelo, pero el comando sigue apareciendo True." |
+| 28 | A | Kevin | "En el H27 ya hice las correcciones, pero sigue apareciendo True." |
+| 29 | A | Kevin | "En el H28 hice la corrección y sigue apareciendo 2." |
+| 30 | A | Kevin | "Hay un problema, en el H29 me dices que ponga un return, pero si lo pongo el H28 me vuelve a lanzar error." |
+| 31 | A | Kevin | "Revisa mi main.py, los del H29 me siguen apareciendo true." |
+| 32 | A | Margarita | "El H42 no era un error, estaba bien identado entonces no fue un hallazgo." |
+| 33 | A | Margarita | "Para que pasen los tests de `test_contrato.py` tuve que modificar el `pattern` en `esquemas.py`. ¿Esto afecta el H31? ¿Tengo que modificar el hallazgo?" |
+| 34 | A/B | Margarita | "El test de `/predicciones` me da `KeyError: 'numero'`. Si cambio el return de `/predicciones` a ORM directo, ¿daño el hallazgo H29?" |
+| 35 | A/B | Margarita | "Quiero arreglar requirements pero no con freeze... necesito que las versiones funcionen en todos los computadores." (H1) |
+| 36 | A/B | Margarita | "¿Por qué esas versiones? ¿No las estás poniendo a tu antojo?" |
+| 37 | A/B | Margarita | "Y por qué no lo hacemos con pip compile?" |
 
 ## Aceptado
 
@@ -72,6 +83,14 @@
 | 24 | Solución H42: En `sembrar()`, capturar el código 409, hacer un `GET /polizas`, buscar el número de la póliza y extraer su `id` para añadirlo a la lista. | Es la única forma de que el script sea idempotente (que se pueda ejecutar varias veces sin fallar) y de que la lista `ids` no quede vacía. | Nada, se implementó tal cual. |
 | 24 | Optimización H42: Guardar el diccionario de la póliza en una variable `datos` antes del `POST` para no llamar dos veces a `poliza_sintetica()`. | Mejora el rendimiento y evita posibles inconsistencias si la función generadora cambiara en el futuro. | Se reemplazó la llamada doble a `poliza_sintetica()` por el uso de la variable datos. |
 | 25 | Solución H44: En `main()`, envolver la conexión en un `try/except` `httpx.ConnectError` para imprimir un mensaje amigable y salir con `sys.exit(1)`. | Evita que el usuario vea un traceback largo y confuso cuando olvida levantar el servidor. | Nada, se implementó tal cual. |
+| 26 | Cambiar el `return {"error": ...}` por `raise HTTPException(status_code=404, detail="...")` en el `PUT /polizas/{id}` (H25). | FastAPI exige que un recurso no encontrado devuelva 404 (restricción B6). El error 500 era porque el diccionario no coincidía con el `response_model`. | Nada, se implementó tal cual. |
+| 27 | Mover la carga del modelo `pickle` a una función con `@lru_cache` y usar `Depends` para inyectarlo (H26). | Evita que el servidor falle al importar si el modelo no está, y lo carga una sola vez por proceso (M11). | Se ajustó la función para que obtenga la ruta desde `get_settings()` en lugar de `config.RUTA_MODELO`. |
+| 28 | Inyectar la configuración con `Depends(get_settings)` y pasar el secreto como parámetro a la función `firmar()` (H27). | Elimina la dependencia de variables globales y cumple la restricción B2 del taller (M8). | Se modificó la firma de `firmar(numero, secreto)` y se inyectó `settings` en las rutas. |
+| 29 | Añadir parámetros `skip` y `limit` al endpoint `GET /polizas` (H28). | Evita que el servidor colapse devolviendo miles de registros de golpe (M6). | Nada, se implementó tal cual. |
+| 30 | Unificar la solución de H28 y H29 en `listar_polizas`: usar `.offset(skip).limit(limit)` y devolver los objetos ORM con `db.scalars(query).all()` en lugar de usar `_poliza()`. | Ambas soluciones chocaban en el mismo endpoint. Devolver ORM directamente elimina el código redundante y el error de Pydantic (M6). | Se eliminaron las funciones `_poliza` y `_siniestro` de todo el archivo. |
+| 33 | Ajustar el `pattern` del número de póliza a `r"^POL-[\w-]+$"` para que los tests del contrato (que usan `POL-CT-5F0E92`) pasen sin afectar el H31. | El patrón original era demasiado estricto y rompía los tests. El patrón nuevo valida el formato base sin rechazar los números válidos. | Se actualizó el H31 con la nueva corrección aplicada. |
+| 34 | Añadir `numero` a `PrediccionSalida` y mapear `p.poliza.numero` en `/predicciones` (H47), en lugar de devolver el ORM directo. | El esquema exige el `numero` de la póliza, pero el modelo ORM no lo tiene (está en la relación). Devolver ORM directo fallaría con `KeyError`. | Se dejó el H29 intacto y se añadió el H47 como un hallazgo nuevo. |
+| 35, 37 | Usar `pip-tools` (`pip-compile`) para generar el `requirements.txt` a partir de un `requirements.in`. | Permite fijar versiones exactas (`==`) pero resolviendo la compatibilidad de manera universal, sin atarse a los binarios locales como hace `pip freeze` (M1). | Se decidió dejar los nombres solos en el `.in` (excepto SQLAlchemy y Pydantic, que tienen límites por el taller) para que `pip-compile` elija. |
 | 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
@@ -91,6 +110,10 @@
 | 19 | Eliminar las funciones `_poliza` y `_siniestro` y devolver objetos ORM directamente. | Ya había código avanzado por una compañera que usaba esas funciones; cambiarlo implicaba más trabajo y riesgo de romper algo. | Se mantuvieron las funciones `_poliza` y `_siniestro`; `response_model` valida y filtra los diccionarios. |
 | 20 | Incluir `status_code=201` como parte de H14. | Son defectos distintos: H14 es "falta `response_model`"; H21 es "`falta status_code=201`". El taller pide documentar cada defecto por separado. | Se separaron en H14 y H21. |
 | 24 | Versión inicial del código H42: Implementar la búsqueda del `ID` llamando a `poliza_sintetica()` dos veces: una para el `POST` y otra para comparar el número dentro del bucle `for p in r_get.json()`. | Aunque funcionaba, era ineficiente y propenso a errores: generaba los datos de la póliza dos veces por cada iteración. Si en el futuro `poliza_sintetica()` cambiara (por ejemplo, para usar un estado global de random o para consultar una API), el número enviado en el `POST` y el número buscado en la comparación podrían no coincidir, rompiendo la lógica. | Se rechazó la doble llamada y se optó por guardar el diccionario en una variable `datos = poliza_sintetica(...)` antes del `POST`. Así se usa la misma variable tanto para enviar la petición como para comparar el número en la búsqueda del `ID`. |
+| 31 | Dejar el archivo `main.py` con las funciones `_poliza()` y `_siniestro()` definidas y devolver diccionarios manuales. | El comando de evidencia seguía dando `True`. Si el calificador las ve, resta puntos porque el código está sucio (H29) y expone campos internos. | Se borraron ambas funciones y se cambió el `return` de las rutas para devolver el objeto ORM directamente. |
+| 32 | Documentar el H42 (error de indentación) como un hallazgo válido. | El código ya estaba bien indentado. El taller dice que un falso positivo resta la mitad de lo que suma una correcta. | Se eliminó el H42 de la tabla de `HALLAZGOS.md`. |
+| 35 | Usar `pip freeze > requirements.txt` para congelar las versiones. | `pip freeze` congela todas las dependencias transitivas y las versiones exactas de la máquina local. Si un compañero usa otro sistema operativo (macOS/Linux), `pip install` podría fallar. | Se usó `pip-compile` con un `requirements.in` con rangos, para generar un `.txt` universal y compatible con todos los sistemas. |
+| 36 | Imponer rangos de versiones estrictos en el `.in` (ej. `fastapi>=0.110,<0.120`, `scikit-learn>=1.5,<1.6`) sin consultar. | El usuario cuestionó que se eligieran versiones "a mi antojo". Como el taller no exige versiones específicas para todo, era mejor dejar que `pip-compile` resolviera según la compatibilidad actual. | Se dejaron los nombres solos en el `.in` (excepto `sqlalchemy` y `pydantic`, que tienen límites por requerimiento del taller) y se dejó que `pip-compile` buscara las últimas compatibles. |
 | 1 |  |  |  |
 | 1 |  |  |  |
 | 1 |  |  |  |
