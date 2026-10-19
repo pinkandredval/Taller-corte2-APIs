@@ -65,6 +65,7 @@
 | 52 | D | Margarita | "Si el test corregido usa `POL-2026-ABC02` y el original usa `uuid`, ¿cómo demuestro que el original es inestable sin mutar `main.py`?" |
 | 53 | B | Kevin | "El contenedor falla con `exec: "uvicorn": executable file not found`. ¿Cómo lo arreglo?" |
 | 54 | B | Kevin | "El contenedor arranca pero `/polizas` da 500 porque la base de datos no tiene tablas. ¿Cómo ejecuto las migraciones?" |
+| 55 | B | Valentina | "Me da miedo dañar algo si borro el bloque `if __name__ == "__main__":` de main.py. ¿Qué hago?" |
 
 
 ## Aceptado
@@ -117,6 +118,7 @@
 | 51, 52 | **Defecto 3 (ajuste final):** Usar `ModeloFalso` para el endpoint `/score` y una instancia global `_RNG = random.Random(42)` para generar datos variados pero reproducibles. | Solución adoptada de otra IA. Es más robusta y profesional que las mutaciones basadas en la suerte. | Se añadió `@pytest.fixture(autouse=True)` para limpiar la base y `ModeloFalso` para evitar dependencias externas. |
 | 53 | Añadir `COPY --from=builder /usr/local/bin /usr/local/bin` en la etapa `runtime`. | Sin esta línea, el contenedor no encontraba `uvicorn` porque solo se copiaban las librerías (`site-packages`), no los ejecutables. | Nada, se implementó tal cual. |
 | 54 | Cambiar el `CMD` a `["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]` | El taller exige que `alembic upgrade head` cree el esquema en una base vacía (B5). Sin esto, la base no tenía tablas y `/polizas` fallaba con 500. | Nada, se implementó tal cual. |
+| 55 | Opción B: Cambiar `host="127.0.0.1"` por `host="0.0.0.0"` y `reload=True` por `reload=False` en el bloque `if __name__ == "__main__":` de `main.py`. |Es un cambio mínimo que no borra nada, evita el `--reload` en producción y no afecta al funcionamiento con `uvicorn` ni `Docker`. | Nada, se implementó tal cual. |
 
 
 ## Rechazado
@@ -153,7 +155,5 @@
 | 49, 50 | **Defecto 3:** Demostrar la inestabilidad ejecutando el test original 5 veces y mostrando que el resultado varía (a veces 6 passed, a veces 1 failed). | Aunque la idea era buena, al final se optó por una solución más limpia y robusta propuesta por otra IA: el uso de un `ModeloFalso` y una instancia global de `Random(42)` con datos variados y deterministas. | Se implementó la solución de la otra IA (con `ModeloFalso` y `_RNG`), que es más completa y profesional. |
 | 51, 52 | **Defecto 3 (ajuste):** Añadir una fixture para limpiar la base de datos antes de cada test y usar un número fijo (`POL-2026-ABC02`). | Al igual que la anterior, esta solución fue reemplazada por la versión final que usa `ModeloFalso` y un `Random(42)` global para generar datos variados pero reproducibles. | Se aplicó la versión final de `test_ia_corregido.py` que incluye `ModeloFalso` y `_RNG`. |
 | 52 | Usar un número fijo que no cumpliera el patrón (como `POL-123`) para hacer fallar al original. | No era determinista, dependía de que el azar generara un número inválido. | Se descartó y se usó la repetición de ejecuciones. |
-| 1 |  |  |  |
-| 1 |  |  |  |
-| 1 |  |  |  |
-| 1 |  |  |  |
+| 55 | Eliminar completamente el bloque `if __name__ == "__main__":`. | preferi no borrar el código por miedo a dañar algo. | Se mantuvo el bloque, solo se cambiaron los valores de `host` y `reload`. |
+
