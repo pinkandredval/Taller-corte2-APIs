@@ -229,12 +229,11 @@ polizas-api/
 │   ├── versions/             # Revisiones generadas (una por cambio de esquema)
 │   ├── env.py                # Configuración del entorno de Alembic
 │   └── script.py.mako        # Plantilla para generar nuevas revisiones
-├── plantillas/               # Plantillas de los entregables del taller
-│   ├── BITACORA_IA.md        # Plantilla de bitácora
-│   ├── CONSULTAS.csv         # Plantilla para la Parte C
-│   ├── DICTAMEN_IA.md        # Plantilla para la Parte D
-│   ├── EQUIPO.md             # Plantilla para declarar el equipo
-│   └── HALLAZGOS.md          # Plantilla para la Parte A
+├── BITACORA_IA.md            # Plantilla de bitácora
+├── CONSULTAS.csv             # Plantilla para la Parte C
+├── DICTAMEN_IA.md            # Plantilla para la Parte D
+├── EQUIPO.md                 # Plantilla para declarar el equipo
+├── HALLAZGOS.md              # Plantilla para la Parte A
 ├── tests/                    # Pruebas automatizadas
 │   ├── test_api.py           # Pruebas originales del servicio
 │   ├── test_contrato.py      # Batería de 12 tests del contrato (no modificar)

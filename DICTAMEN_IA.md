@@ -167,7 +167,7 @@ app.dependency_overrides[get_db] = override_get_db
 ## Defecto 3
 
 - **Qué está mal:** El test original genera sus datos con `uuid.uuid4()` y con `random.choice` / `random.uniform` sin semilla. Cada ejecución prueba valores distintos y no reproducibles, y ninguna aserción depende de ellos: solo comprueba que exista la clave `puntaje`, no su valor. Un servicio que devuelva datos aleatorios pasa igual.
-- **Por qué es un defecto** (<módulo · sección>): Un test debe ser determinista y reproducible: si falla, hay que poder repetir el fallo con los mismos datos. Con datos sin semilla es imposible, y además el test no fija el resultado esperado, así que no puede fallar cuando el código está mal.
+- **Por qué es un defecto** (M10 · 7. Reproducibilidad sin Docker): Un test debe ser determinista y reproducible: si falla, hay que poder repetir el fallo con los mismos datos. Con datos sin semilla es imposible, y además el test no fija el resultado esperado, así que no puede fallar cuando el código está mal.
 - **Cómo lo comprobamos:**
 
 # mutación

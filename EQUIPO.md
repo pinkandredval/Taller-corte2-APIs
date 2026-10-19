@@ -10,6 +10,6 @@
 
 | Nombre completo | Correo institucional | Identidades git |
 |-----------------|----------------------|-----------------|
-| Kevin Leonardo Chaparro Reyes | kevin.chaparro@usantotomas.edu.co | KevinG47 <br> chaparrokevin485@gmail.com |
-| Valentina Muñoz Palma | valentinamunoz@usantotomas.edu.co | pinkandredval <br> valentinampalma23@gmail.com |
-| Paula Margarita Triana Ancinez | paulamtriana@usantotomas.edu.co  | pmta-06 <br> margarita3paula@gmail.com |
+| Kevin Leonardo Chaparro Reyes | kevin.chaparro@usantotomas.edu.co | KevinG47 <kevin47gremory@gmail.com> |
+| Valentina Muñoz Palma | valentinamunoz@usantotomas.edu.co | pinkandredval <valentinampalma23@gmail.com> |
+| Paula Margarita Triana Ancinez | paulamtriana@usantotomas.edu.co | pmta-06 <margarita3paula@gmail.com> |
